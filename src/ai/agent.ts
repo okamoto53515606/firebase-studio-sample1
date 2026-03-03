@@ -19,6 +19,7 @@ export const dataAgent = ai.defineFlow(
     outputSchema: DataAgentOutputSchema,
   },
   async (input) => {
+    console.log('[Agent] Starting flow with query:', input.query);
     try {
       // MCPホストからツールを取得
       const ga4Tools = await mcpHost.getActiveTools(ai);
@@ -29,14 +30,16 @@ export const dataAgent = ai.defineFlow(
         if (action?.metadata?.inputSchema) {
           action.metadata.inputSchema = patchSchema(action.metadata.inputSchema);
         }
-        // Genkitの内部的な inputJsonSchema も存在する場合は念のためパッチ
         if (action?.inputJsonSchema) {
           action.inputJsonSchema = patchSchema(action.inputJsonSchema);
         }
       }
 
       const ga4ToolNames = ga4Tools.map(t => (t as any).__action?.name || 'unknown');
-      console.log(`[MCP] GA4 tools (patched): ${ga4ToolNames.join(', ')}`);
+      console.log('[Agent] GA4 tools:', ga4ToolNames.join(', ') || 'none');
+
+      const allTools = [bigQueryTool, listDatasetsTool, ...ga4Tools];
+      console.log('[Agent] Total tools:', allTools.length, '(BQ: 2 + GA4:', ga4Tools.length, ')');
 
       const ga4ToolListText = ga4ToolNames.length > 0 
         ? `利用可能なGA4ツール: ${ga4ToolNames.join(', ')}`
@@ -54,8 +57,8 @@ GA4 (Google Analytics 4) に関する機能:
 
 重要: GA4関連のツールを呼び出す際は、必ず「ga4/」プレフィックス付きの正式なツール名を使用してください。
 例:
-- ga4/runReport（✓ 正しい）
-- ga4/get_active_users（✓ 正しい）
+- ga4/runReport (GA4のレポート取得に最も汎用的なツールです)
+- ga4/get_active_users
 
 分析の手順:
 1. 質問内容に基づき、適切なツールを選択します。
@@ -70,18 +73,20 @@ GA4 (Google Analytics 4) に関する機能:
 - 今日は ${new Date().toISOString().split('T')[0]} です。
 `;
 
+      console.log('[Agent] Calling ai.generate...');
       const response = await ai.generate({
         system: systemPrompt,
         prompt: input.query,
-        tools: [bigQueryTool, listDatasetsTool, ...ga4Tools],
+        tools: allTools,
         maxTurns: 10,
       });
+
+      console.log('[Agent] Response received, length:', response.text?.length);
       return { answer: response.text };
     } catch (error: any) {
-      console.error('Agent error:', error);
+      console.error('[Agent] Error:', error.message, error.stack);
       return { answer: "エラーが発生しました。再度お試しください。 " + (error.message || "") };
-    } finally {
-      await mcpHost.close();
     }
+    // 修正: 複数回呼び出せるよう、ここでは mcpHost.close() は呼ばない
   }
 );
