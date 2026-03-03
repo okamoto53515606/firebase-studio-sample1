@@ -3,6 +3,7 @@ import { ai } from '@/ai/genkit';
 import { bigQueryTool, listDatasetsTool } from '@/ai/tools/bigquery';
 import { BIGQUERY_DATASET_DESCRIPTIONS } from '@/lib/bigquery-schema';
 import { mcpHost } from '@/ai/mcp';
+import { patchSchema } from '@/ai/mcp-schema-fix';
 
 export const DataAgentInputSchema = z.object({
   query: z.string(),
@@ -18,15 +19,43 @@ export const dataAgent = ai.defineFlow(
     outputSchema: DataAgentOutputSchema,
   },
   async (input) => {
-    const systemPrompt = `
+    try {
+      // MCPホストからツールを取得
+      const ga4Tools = await mcpHost.getActiveTools(ai);
+      
+      // MCPツールのスキーマをパッチしてクラッシュを防ぐ
+      for (const tool of ga4Tools) {
+        const action = (tool as any).__action;
+        if (action?.metadata?.inputSchema) {
+          action.metadata.inputSchema = patchSchema(action.metadata.inputSchema);
+        }
+        // Genkitの内部的な inputJsonSchema も存在する場合は念のためパッチ
+        if (action?.inputJsonSchema) {
+          action.inputJsonSchema = patchSchema(action.inputJsonSchema);
+        }
+      }
+
+      const ga4ToolNames = ga4Tools.map(t => (t as any).__action?.name || 'unknown');
+      console.log(`[MCP] GA4 tools (patched): ${ga4ToolNames.join(', ')}`);
+
+      const ga4ToolListText = ga4ToolNames.length > 0 
+        ? `利用可能なGA4ツール: ${ga4ToolNames.join(', ')}`
+        : 'GA4ツールは現在利用できません。';
+
+      const systemPrompt = `
 あなたは優秀なデータ分析アシスタントです。BigQuery と Google Analytics 4 (GA4) の両方にアクセスできます。
 
 利用可能なデータセット情報 (BigQuery): ${BIGQUERY_DATASET_DESCRIPTIONS}
 
 GA4 (Google Analytics 4) に関する機能:
 - GA4のツール（ga4/で始まるツール群）を使って、アクティブユーザー数、ページビュー、イベント数、セッション数などを取得できます。
+- ${ga4ToolListText}
 - ユーザーがアクセス解析やWebサイトのパフォーマンス、ユーザー行動に関する質問をした場合は、GA4ツールを積極的に使用してください。
-- 必要に応じて、BigQueryのデータとGA4のデータを組み合わせて分析を行うことも可能です。
+
+重要: GA4関連のツールを呼び出す際は、必ず「ga4/」プレフィックス付きの正式なツール名を使用してください。
+例:
+- ga4/runReport（✓ 正しい）
+- ga4/get_active_users（✓ 正しい）
 
 分析の手順:
 1. 質問内容に基づき、適切なツールを選択します。
@@ -40,10 +69,7 @@ GA4 (Google Analytics 4) に関する機能:
 - 丁寧な日本語で回答してください。
 - 今日は ${new Date().toISOString().split('T')[0]} です。
 `;
-    try {
-      // 修正: MCPホストからツールを「毎回取得」する
-      const ga4Tools = await mcpHost.getActiveTools(ai);
-      
+
       const response = await ai.generate({
         system: systemPrompt,
         prompt: input.query,
