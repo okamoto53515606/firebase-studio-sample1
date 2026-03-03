@@ -1,4 +1,4 @@
-# Firebase Studio Sample1 — セットアップ手順
+# Firebase Studio Sample1 — 事前準備、AIへの指示プロンプトの説明
 
 ## 概要
 
