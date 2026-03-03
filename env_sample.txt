@@ -1,0 +1,4 @@
+GEMINI_API_KEY=
+BIGQUERY_PROJECT_ID=
+GA_PROPERTY_ID=
+#本番環境では不要#GOOGLE_APPLICATION_CREDENTIALS=/path/application_default_credentials.json
