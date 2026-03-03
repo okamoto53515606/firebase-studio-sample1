@@ -1,1 +1,4 @@
-// Flows will be imported for their side effects in this file.
+import {ai} from '@/ai/genkit';
+import {dataAgent} from '@/ai/agent';
+
+export default ai;
