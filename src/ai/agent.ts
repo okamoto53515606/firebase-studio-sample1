@@ -55,10 +55,47 @@ GA4 (Google Analytics 4) に関する機能:
 - ${ga4ToolListText}
 - ユーザーがアクセス解析やWebサイトのパフォーマンス、ユーザー行動に関する質問をした場合は、GA4ツールを積極的に使用してください。
 
-重要: GA4関連のツールを呼び出す際は、必ず「ga4/」プレフィックス付きの正式なツール名を使用してください。
-例:
-- ga4/runReport (GA4のレポート取得に最も汎用的なツールです)
-- ga4/get_active_users
+GA4ツールの正しいパラメータ形式:
+
+■ ga4/getActiveUsers
+  - startDate: "YYYY-MM-DD" 形式の文字列
+  - endDate: "YYYY-MM-DD" 形式の文字列
+  例: { "startDate": "2026-03-04", "endDate": "2026-03-04" }
+
+■ ga4/getPageViews
+  - startDate: "YYYY-MM-DD" 形式の文字列
+  - endDate: "YYYY-MM-DD" 形式の文字列
+  - dimensions: （オプション）文字列の配列。例: ["pagePath", "date"]
+  例: { "startDate": "2026-02-25", "endDate": "2026-03-04", "dimensions": ["date"] }
+
+■ ga4/getEvents
+  - startDate: "YYYY-MM-DD" 形式の文字列
+  - endDate: "YYYY-MM-DD" 形式の文字列
+  - eventName: （オプション）特定のイベント名。例: "page_view"
+  例: { "startDate": "2026-02-25", "endDate": "2026-03-04" }
+
+■ ga4/getUserBehavior
+  - startDate: "YYYY-MM-DD" 形式の文字列
+  - endDate: "YYYY-MM-DD" 形式の文字列
+  例: { "startDate": "2026-02-25", "endDate": "2026-03-04" }
+
+■ ga4/runReport（最も汎用的。上記ツールで対応できない場合に使用）
+  - startDate: "YYYY-MM-DD" 形式の文字列
+  - endDate: "YYYY-MM-DD" 形式の文字列
+  - metrics: オブジェクト配列。各要素は {"name": "メトリクス名"} の形式
+    例: [{"name": "activeUsers"}, {"name": "sessions"}]
+  - dimensions: オブジェクト配列。各要素は {"name": "ディメンション名"} の形式
+    例: [{"name": "date"}, {"name": "country"}]
+  - dimensionFilter: （オプション）ディメンションでのフィルタ
+  例: { "startDate": "2026-02-25", "endDate": "2026-03-04", "metrics": [{"name": "screenPageViews"}], "dimensions": [{"name": "date"}] }
+
+重要な注意:
+- ga4/runReport の metrics と dimensions は文字列ではなくオブジェクト配列（{"name": "xxx"}）です
+- ga4/getPageViews の dimensions は文字列配列（["date"]）です（runReportとは形式が異なります）
+- 日付は必ず "YYYY-MM-DD" 形式にしてください
+- 「今日」「過去7日」などの相対的な期間は、今日の日付から計算して具体的なYYYY-MM-DD形式に変換してください
+- ga4/runReport よりも、目的に合った専用ツール（getActiveUsers, getPageViews, getEvents, getUserBehavior）を優先して使ってください
+- 必ず「ga4/」プレフィックス付きの正式なツール名を使用してください。
 
 分析の手順:
 1. 質問内容に基づき、適切なツールを選択します。
@@ -81,12 +118,12 @@ GA4 (Google Analytics 4) に関する機能:
         maxTurns: 10,
       });
 
+      console.log('[Agent] Tool calls in response:', JSON.stringify(response.toolRequests, null, 2));
       console.log('[Agent] Response received, length:', response.text?.length);
       return { answer: response.text };
     } catch (error: any) {
       console.error('[Agent] Error:', error.message, error.stack);
       return { answer: "エラーが発生しました。再度お試しください。 " + (error.message || "") };
     }
-    // 修正: 複数回呼び出せるよう、ここでは mcpHost.close() は呼ばない
   }
 );
