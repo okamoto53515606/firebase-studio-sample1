@@ -1,4 +1,4 @@
 これは解説用のサンプルアプリです。
 サンプルアプリの詳細は
-[【Firebase Studio】環境構築不要！Genkit×MCPでGA4分析AIアプリを作る全工程とプロンプト完全ガイド](https://www.okamomedia.tokyo/articles/firebase-studioaiga4genkitmcp)
+[【実録】既存のGA4分析サンプルアプリをGoogle AI Studioへ移行！エラー・コストと本音レビュー](https://www.okamomedia.tokyo/articles/google-ai-studio-migration-ga4-analytics-record)
 をご覧下さい。
