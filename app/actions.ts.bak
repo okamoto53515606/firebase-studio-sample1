@@ -163,8 +163,6 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
 
     return { answer: finalAnswer, context: toolContext, error: null };
   } catch (error: any) {
-    // 内部エラー詳細（APIキー・スタックトレース等）をクライアントに漏洩させない
-    console.error('[runAgentAction] Error:', error);
-    return { answer: '', context: '', error: 'エージェントの実行中にエラーが発生しました。しばらく経ってからお試しください。' };
+    return { answer: '', context: '', error: error.message };
   }
 }
