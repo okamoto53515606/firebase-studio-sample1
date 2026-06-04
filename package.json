@@ -9,14 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@genkit-ai/google-genai": "^1.36.0",
     "@google-analytics/data": "^4.10.1",
     "@google-cloud/bigquery": "^7.9.0",
     "@google/genai": "^2.4.0",
     "@tailwindcss/postcss": "4.1.11",
     "@tailwindcss/typography": "^0.5.19",
     "clsx": "^2.1.1",
-    "genkit": "^1.36.0",
     "lucide-react": "^0.553.0",
     "motion": "^12.23.24",
     "next": "^16.2.6",
