@@ -7,6 +7,8 @@ import { BIGQUERY_DATASET_DESCRIPTIONS } from '@/lib/bigquery-schema';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// Why: AIがユーザーの質問に応じてBigQueryのデータを自律的に検索できるようにするためのツール宣言よ✨
+// これがあることで、AIはSQLを自分で組み立ててデータを取りに行くことができるの。
 const queryBigQueryDeclaration = {
   name: 'query_bigquery',
   description: 'Executes a SQL query against BigQuery and returns the resulting rows.',
@@ -22,6 +24,8 @@ const queryBigQueryDeclaration = {
   }
 };
 
+// Why: GA4のページビュー数も同様にAIが日付を指定して取得できるように定義しているわ。
+// 直感的に「今週のアクセス数は？」といった質問に答えられるようにするためね！
 const getGA4PageViewsDeclaration = {
   name: 'get_ga4_page_views',
   description: 'Gets page views data from Google Analytics 4 for a given date range.',
@@ -41,6 +45,11 @@ const getGA4PageViewsDeclaration = {
   }
 };
 
+/**
+ * ユーザーのプロンプトを受け取り、AI エージェントを介してツールを実行し、回答を生成する関数よ。
+ * Why: 複雑な分析やデータ取得をフロントエンドではなくバックエンドでセキュアに処理し、
+ * APIキーを隠蔽しながら一連のAIの思考ループを管理するために必要な処理なの。
+ */
 export async function runAgentAction(userPrompt: string) {
   try {
     const chat = ai.chats.create({
@@ -68,6 +77,8 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
     let maxTurns = 5;
     let turn = 0;
 
+    // Why: AIは1回のツール呼び出しで情報が足りない場合、さらにツールを呼び出すことがあるの。
+    // 最大5回のループ（maxTurns）を設けることで、AIの推論サイクルをサポートしつつ、無限ループで落ちるのを防いでいるわ！
     while (response.functionCalls && response.functionCalls.length > 0 && turn < maxTurns) {
       turn++;
       const functionResponses = [];
