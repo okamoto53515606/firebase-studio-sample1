@@ -140,7 +140,6 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
 
     return { answer: finalAnswer, context: toolContext, error: null };
   } catch (error: any) {
-    console.error('[Agent] Unexpected error:', error);
-    return { answer: '', context: '', error: 'エージェントの実行中に予期しないエラーが発生しました。' };
+    return { answer: '', context: '', error: error.message };
   }
 }
