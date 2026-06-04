@@ -78,14 +78,21 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
         if (call.name === 'query_bigquery') {
           const sqlQuery = (call.args as any).sqlQuery;
           toolContext += `[BigQuery] Query: ${sqlQuery}\n`;
-          try {
-            const bq = await getBigQueryClient();
-            const [rows] = await bq.query(sqlQuery);
-            toolData = { results: serializeBigQueryResults(rows) };
-            toolContext += `[BigQuery] Success: returned ${rows.length} rows\n`;
-          } catch(e: any) {
-            toolData = { error: e.message };
-            toolContext += `[BigQuery] Error: ${e.message}\n`;
+          // SELECTのみ許可。INSERT/UPDATE/DELETE/DROP等の破壊的操作を防ぐ
+          if (!sqlQuery || !sqlQuery.trim().toLowerCase().startsWith('select')) {
+            toolData = { error: 'Only SELECT statements are allowed.' };
+            toolContext += `[BigQuery] Rejected: non-SELECT statement\n`;
+          } else {
+            try {
+              const bq = await getBigQueryClient();
+              const [rows] = await bq.query(sqlQuery);
+              toolData = { results: serializeBigQueryResults(rows) };
+              toolContext += `[BigQuery] Success: returned ${rows.length} rows\n`;
+            } catch(e: any) {
+              console.error('[BigQuery] Query error:', e);
+              toolData = { error: 'BigQueryクエリの実行中にエラーが発生しました。' };
+              toolContext += `[BigQuery] Error occurred\n`;
+            }
           }
         } 
         else if (call.name === 'get_ga4_page_views') {
@@ -104,8 +111,9 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
             toolData = { data };
             toolContext += `[GA4] Success: returned ${data.length} rows\n`;
           } catch(e: any) {
-            toolData = { error: e.message };
-            toolContext += `[GA4] Error: ${e.message}\n`;
+            console.error('[GA4] Report error:', e);
+            toolData = { error: 'GA4レポートの取得中にエラーが発生しました。' };
+            toolContext += `[GA4] Error occurred\n`;
           }
         }
 
@@ -132,6 +140,7 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
 
     return { answer: finalAnswer, context: toolContext, error: null };
   } catch (error: any) {
-    return { answer: '', context: '', error: error.message };
+    console.error('[Agent] Unexpected error:', error);
+    return { answer: '', context: '', error: 'エージェントの実行中に予期しないエラーが発生しました。' };
   }
 }
