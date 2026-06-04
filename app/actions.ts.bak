@@ -138,7 +138,6 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
       response = await chat.sendMessage({
         message: functionResponses
       });
-      turn++; // ループカウントは末尾でインクリメント（意図を明確にする）
     }
     
     let finalAnswer = '';
