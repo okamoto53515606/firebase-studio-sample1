@@ -36,9 +36,7 @@ export default function Page() {
            onChange={e => setQuery(e.target.value)} 
            className="w-full border rounded-lg p-3 min-h-[100px]"
            placeholder="Ask a question about BigQuery or Google Analytics data..."
-           maxLength={2000}
         />
-        <p className="text-xs text-gray-400 text-right">{query.length} / 2000</p>
         <button 
            onClick={handleRun} 
            disabled={loading || !query}

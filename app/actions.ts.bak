@@ -162,8 +162,6 @@ ${BIGQUERY_DATASET_DESCRIPTIONS}
 
     return { answer: finalAnswer, context: toolContext, error: null };
   } catch (error: any) {
-    // 内部エラー詳細はサーバーログに記録し、クライアントには汎用メッセージのみ返す
-    console.error('[runAgentAction] Unexpected error:', error);
-    return { answer: '', context: '', error: 'エージェントの実行中にエラーが発生しました。しばらく経ってから再試行してください。' };
+    return { answer: '', context: '', error: error.message };
   }
 }
